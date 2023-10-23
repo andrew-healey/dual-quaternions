@@ -9,4 +9,4 @@ translation = np.array([50,40,30])
 
 q = DualQuaternion.from_rot_trans(r,translation)
 
-print(q.transform_vector(v))
+print(q.transform_vector(v)) # [50,40,1]

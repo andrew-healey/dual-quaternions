@@ -111,7 +111,6 @@ class DualQuaternion:
         if(type(other)==float or type(other) == int): return DualQuaternion(qr=self.qr*other,qd=self.qd*other)
 
         assert type(other)==DualQuaternion,f"type(other)=={type(other)}"
-        print("other.qr",other.qr)
         return DualQuaternion(
             qr=self.qr * other.qr,
             qd=self.qr * other.qd + self.qd * other.qr

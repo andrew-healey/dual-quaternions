@@ -75,15 +75,16 @@ class DualQuaternion:
 
     @staticmethod
     def from_vector(vector:ndarray)->Self:
-        qr = Quaternion.from_vector(vector)
-        return DualQuaternion(
-            qr=qr,
-            qd=qr*0 # identity
+        r = Quaternion(data=np.array([1,0,0,0]))
+        return DualQuaternion.from_rot_trans(
+            rotation=r,
+            translation=vector*2
         )
 
     @staticmethod
     def from_rot_trans(rotation:Quaternion,translation:ndarray)->Self:
         t = Quaternion(data=np.concatenate([np.array([0]),translation]))
+        print("t",t)
         return DualQuaternion(
             qr=rotation,
             qd=0.5 * t * rotation
@@ -91,14 +92,23 @@ class DualQuaternion:
     
     def transform_vector(self,vector:ndarray)->ndarray:
         v = DualQuaternion.from_vector(vector)
-        v_p = self * v * self.conj()
-        rot,trans = v_p.to_rot_trans()
-        return rot.v + trans
+        print("v",v)
+        print("q",self)
+        print(self*v)
+        print(self*v*self.conj_negative())
+        v_p = self * v * self.conj_negative()
+        qid = Quaternion.from_axis_angle(np.array([1,0,0]),0)
+        dqid = DualQuaternion.from_rot_trans(qid,np.zeros(3))
+        for i in range(5):
+            v_p = dqid * v_p * dqid.conj_negative()
+        print("v_p",v_p)
+        qr,trans = v_p.to_rot_trans()
+        return trans/2
     
     def to_rot_trans(self)->Tuple[Quaternion,ndarray]:
-        assert abs(self.qr.norm()-1)<eps,f"Qr is not normalized! ||Qr|| = {self.qr.norm()}"
+        assert abs(self.norm()-1)<eps,f"Qr is not normalized! ||Qr|| = {self.qr.norm()}"
 
-        translation = (self.qd * self.qr.conj()).v
+        translation = 2 * (self.qd * self.qr.conj()).v
         return self.qr,translation
 
     def __add__(self,other):
@@ -124,6 +134,12 @@ class DualQuaternion:
         return DualQuaternion(
             qr=self.qr.conj(),
             qd=self.qd.conj()
+        )
+    
+    def conj_negative(self):
+        return DualQuaternion(
+            qr=self.qr.conj(),
+            qd=-1*self.qd.conj()
         )
     
     def norm(self):
